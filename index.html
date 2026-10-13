@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Order</title>
+<style>
+  :root {
+    --bg: #f6f7f4; --card: #ffffff; --ink: #1d2b1f; --muted: #6b7a6e; --line: #e2e6df;
+    --green: #128c3f; --green-dark: #0e7033; --wa: #25d366; --danger: #c0392b; --soft: #eaf5ec;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font: 16px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  .wrap { max-width: 640px; margin: 0 auto; padding: 16px 16px 140px; }
+  header { padding: 8px 0 14px; }
+  header h1 { margin: 0 0 4px; font-size: 26px; letter-spacing: -0.3px; }
+  header p  { margin: 0; color: var(--muted); }
+  .addr { margin-top: 10px; font-size: 14px; color: var(--muted); }
+  .addr a { color: var(--green-dark); font-weight: 600; text-decoration: none; }
+  .note { background: var(--soft); border: 1px solid #cfe6d4; border-radius: 12px; padding: 10px 14px; margin: 10px 0 18px; font-size: 14px; }
+  h2 { font-size: 15px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin: 22px 0 10px; }
+
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 14px; overflow: hidden; margin-bottom: 12px; display: grid; grid-template-columns: 120px 1fr; }
+  .card img { width: 120px; height: 100%; min-height: 120px; object-fit: cover; background: #e9ece6; display: block; }
+  .card .noimg { width: 120px; min-height: 120px; background: #e9ece6; display: flex; align-items: center; justify-content: center; color: var(--muted); font-size: 12px; }
+  .card .body { padding: 12px 14px; display: flex; flex-direction: column; gap: 4px; }
+  .card .name { font-weight: 600; font-size: 17px; }
+  .card .desc { color: var(--muted); font-size: 14px; }
+  .card .price { font-weight: 700; font-size: 18px; margin-top: 2px; }
+  .card .stock { font-size: 13px; color: var(--muted); }
+  .card .stock.low { color: #b7560c; font-weight: 600; }
+  .card .stock.out { color: var(--danger); font-weight: 600; }
+  .qty { display: flex; align-items: center; gap: 0; margin-top: 8px; width: max-content; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+  .qty button { width: 42px; height: 40px; border: 0; background: #f1f3ee; font-size: 22px; color: var(--ink); cursor: pointer; }
+  .qty button:disabled { color: #b9c1ba; cursor: default; }
+  .qty span { min-width: 44px; text-align: center; font-weight: 700; font-size: 17px; }
+  .card.sold { opacity: .55; }
+
+  .seg { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 14px; }
+  .seg button { padding: 14px 10px; border: 2px solid var(--line); border-radius: 12px; background: #fff; font: inherit; font-weight: 600; cursor: pointer; color: var(--ink); }
+  .seg button.on { border-color: var(--green); background: var(--soft); color: var(--green-dark); }
+  .seg button small { display: block; font-weight: 400; color: var(--muted); font-size: 12px; margin-top: 2px; }
+  .pickupbox { background: #fff; border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; font-size: 14px; margin-bottom: 14px; }
+  .pickupbox a { color: var(--green-dark); font-weight: 600; }
+
+  form .field { margin-bottom: 14px; }
+  label { display: block; font-weight: 600; font-size: 14px; margin-bottom: 6px; }
+  label small { color: var(--muted); font-weight: 400; }
+  input, textarea { width: 100%; padding: 12px; font: inherit; border: 1px solid var(--line); border-radius: 10px; background: #fff; color: var(--ink); }
+  input:focus, textarea:focus { outline: 2px solid var(--green); border-color: transparent; }
+  textarea { min-height: 84px; resize: vertical; }
+  .row { display: grid; grid-template-columns: 1fr auto; gap: 8px; }
+  .btn2 { padding: 0 14px; border: 1px solid var(--line); border-radius: 10px; background: #fff; font: inherit; font-weight: 600; cursor: pointer; white-space: nowrap; }
+  .hint { font-size: 13px; color: var(--muted); margin-top: 6px; }
+  .hint a { color: var(--green-dark); }
+
+  .bar { position: fixed; left: 0; right: 0; bottom: 0; background: #fff; border-top: 1px solid var(--line); padding: 12px 16px calc(12px + env(safe-area-inset-bottom)); }
+  .bar .in { max-width: 640px; margin: 0 auto; display: flex; align-items: center; gap: 14px; }
+  .bar .sum { flex: 1; }
+  .bar .sum b { font-size: 20px; display: block; }
+  .bar .sum span { font-size: 13px; color: var(--muted); }
+  .cta { background: var(--green); color: #fff; border: 0; border-radius: 12px; padding: 14px 22px; font: inherit; font-weight: 700; font-size: 16px; cursor: pointer; }
+  .cta:disabled { background: #a8b5ab; cursor: default; }
+  .err { background: #fdecea; color: var(--danger); border: 1px solid #f5c6c2; border-radius: 10px; padding: 10px 14px; margin: 10px 0; font-size: 14px; display: none; }
+
+  .done { text-align: center; padding: 40px 10px; }
+  .done .tick { width: 72px; height: 72px; border-radius: 50%; background: var(--soft); color: var(--green); font-size: 40px; line-height: 72px; margin: 0 auto 16px; }
+  .done h1 { margin: 0 0 6px; }
+  .done .id { font-family: ui-monospace, monospace; background: #fff; border: 1px solid var(--line); border-radius: 8px; padding: 6px 12px; display: inline-block; margin: 8px 0 18px; }
+  .done ul { text-align: left; display: inline-block; margin: 0 0 20px; padding-left: 20px; }
+  .wabtn { display: inline-block; background: var(--wa); color: #fff; text-decoration: none; font-weight: 700; padding: 14px 22px; border-radius: 12px; margin-top: 6px; }
+  .closed { text-align: center; padding: 60px 10px; color: var(--muted); }
+  .loading { text-align: center; padding: 60px; color: var(--muted); }
+</style>
+</head>
+<body>
+<div class="wrap" id="app"><div class="loading">Loading…</div></div>
+
+<script>
+  var shop = null, qty = {}, mode = 'Delivery';
+
+  // Where the orders go: the Google Apps Script attached to the Orders sheet.
+  var API = 'https://script.google.com/macros/s/AKfycbwpTtXOWBy3II5cCEknvf60wUxgLK6vKe-GE173tYHlSvvh5O0JlZYl2i0ZutsgsDBL/exec';
+
+  function run(fn, args, ok, fail) {
+    var req = fn === 'getShop'
+      ? fetch(API + '?action=shop', { method: 'GET', cache: 'no-store' })
+      : fetch(API, { method: 'POST', body: JSON.stringify(args[0]) });   // plain-text body: no CORS preflight
+    req.then(function (r) { return r.json(); }).then(ok).catch(fail || function () {
+      showError('Could not reach the shop. Please check your internet connection and try again.');
+    });
+  }
+
+  run('getShop', [], function (s) { shop = s; mode = shop.delivery ? 'Delivery' : 'Pickup'; render(); });
+
+  function money(n) { return shop.currency + Number(n).toLocaleString('en-IN'); }
+  function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+
+  function mapLink(text) {
+    return shop.shopMap ? '<a href="' + esc(shop.shopMap) + '" target="_blank" rel="noopener">' + text + '</a>' : '';
+  }
+
+  function render() {
+    var app = document.getElementById('app');
+    document.title = shop.shopName;
+    var head = '<header><h1>' + esc(shop.shopName) + '</h1>' + (shop.tagline ? '<p>' + esc(shop.tagline) + '</p>' : '')
+      + (shop.shopAddress || shop.shopMap ? '<div class="addr">' + esc(shop.shopAddress) + (shop.shopAddress && shop.shopMap ? ' · ' : '') + mapLink('📍 Open in Google Maps') + '</div>' : '')
+      + '</header>';
+    if (!shop.open) { app.innerHTML = head + '<div class="closed">' + esc(shop.closedMessage) + '</div>'; return; }
+    if (!shop.pickup && !shop.delivery) { app.innerHTML = head + '<div class="closed">Neither pickup nor delivery is switched on right now.</div>'; return; }
+
+    var h = head;
+    if (shop.deliveryNote) h += '<div class="note">' + esc(shop.deliveryNote) + '</div>';
+    h += '<h2>Products</h2><div id="products"></div>';
+    h += '<h2>How do you want it?</h2><div id="modebox"></div>';
+    h += '<h2>Your details</h2><form id="f" onsubmit="return false">'
+      + '<div class="field"><label>Name</label><input id="name" required autocomplete="name" placeholder="Your name"></div>'
+      + '<div class="field"><label>WhatsApp number</label><input id="phone" type="tel" inputmode="numeric" autocomplete="tel" placeholder="10-digit mobile number"></div>'
+      + '<div id="delfields">'
+      + '<div class="field"><label>Delivery address</label><textarea id="address" placeholder="House / flat, street, area, landmark, pin code"></textarea></div>'
+      + '<div class="field"><label>Location <small>(optional — helps the delivery person find you)</small></label>'
+      + '<div class="row"><input id="location" type="url" placeholder="Paste a Google Maps link"><button type="button" class="btn2" onclick="useGps()">📍 Use my location</button></div>'
+      + '<div class="hint" id="lochint">Or open <a href="https://maps.google.com" target="_blank" rel="noopener">Google Maps</a>, press Share and paste the link here.</div></div>'
+      + '</div>'
+      + '<div class="field"><label id="datelabel">Delivery date</label><input id="date" type="date" min="' + shop.minDate + '" max="' + shop.maxDate + '" value="' + shop.minDate + '"></div>'
+      + '<div class="field"><label>Note <small>(optional)</small></label><input id="note" placeholder="Anything we should know?"></div>'
+      + '</form><div class="err" id="err"></div>';
+    h += '<div class="bar"><div class="in"><div class="sum"><b id="total">' + money(0) + '</b><span id="count">Nothing added yet</span></div>'
+      + '<button class="cta" id="go" onclick="submit()" disabled>Place order</button></div></div>';
+    app.innerHTML = h;
+    renderProducts();
+    renderMode();
+  }
+
+  function renderMode() {
+    var box = document.getElementById('modebox');
+    var h = '<div class="seg">';
+    if (shop.delivery) h += '<button type="button" class="' + (mode === 'Delivery' ? 'on' : '') + '" onclick="setMode(\'Delivery\')">🛵 Delivery<small>to your address</small></button>';
+    if (shop.pickup)   h += '<button type="button" class="' + (mode === 'Pickup' ? 'on' : '') + '" onclick="setMode(\'Pickup\')">🏪 Pickup<small>collect from the shop</small></button>';
+    h += '</div>';
+    if (mode === 'Pickup') {
+      h += '<div class="pickupbox"><b>Collect from:</b> ' + esc(shop.shopAddress || shop.shopName)
+         + (shop.shopMap ? '<br>' + mapLink('📍 Get directions on Google Maps') : '') + '</div>';
+    }
+    box.innerHTML = h;
+    document.getElementById('delfields').style.display = mode === 'Delivery' ? '' : 'none';
+    document.getElementById('datelabel').textContent = mode === 'Delivery' ? 'Delivery date' : 'Pickup date';
+  }
+
+  function setMode(m) { mode = m; renderMode(); }
+
+  function renderProducts() {
+    var el = document.getElementById('products');
+    if (!shop.products.length) { el.innerHTML = '<div class="closed">No products listed yet.</div>'; return; }
+    el.innerHTML = shop.products.map(function (p, i) {
+      var q = qty[p.name] || 0, out = p.left <= 0;
+      var stock = out ? 'Sold out' : p.left <= 5 ? 'Only ' + p.left + ' left' : p.left + ' available';
+      var cls = out ? 'out' : p.left <= 5 ? 'low' : '';
+      var maxQ = Math.min(p.maxPerOrder, p.left);
+      return '<div class="card' + (out ? ' sold' : '') + '">'
+        + (p.image ? '<img src="' + esc(p.image) + '" alt="" loading="lazy" onerror="this.outerHTML=\'<div class=noimg>No image</div>\'">' : '<div class="noimg">No image</div>')
+        + '<div class="body"><div class="name">' + esc(p.name) + '</div>'
+        + (p.description ? '<div class="desc">' + esc(p.description) + '</div>' : '')
+        + '<div class="price">' + money(p.price) + '</div>'
+        + '<div class="stock ' + cls + '">' + stock + (p.maxPerOrder < 99 && !out ? ' · max ' + p.maxPerOrder + ' per order' : '') + '</div>'
+        + (out ? '' : '<div class="qty"><button type="button" onclick="change(' + i + ',-1)"' + (q <= 0 ? ' disabled' : '') + '>−</button><span>' + q + '</span>'
+        + '<button type="button" onclick="change(' + i + ',1)"' + (q >= maxQ ? ' disabled' : '') + '>+</button></div>')
+        + '</div></div>';
+    }).join('');
+    updateBar();
+  }
+
+  function change(i, d) {
+    var p = shop.products[i], q = (qty[p.name] || 0) + d;
+    qty[p.name] = Math.max(0, Math.min(q, p.maxPerOrder, p.left));
+    renderProducts();
+  }
+
+  function cart() {
+    return shop.products.filter(function (p) { return qty[p.name] > 0; })
+      .map(function (p) { return { product: p.name, qty: qty[p.name], amount: qty[p.name] * p.price }; });
+  }
+
+  function updateBar() {
+    var c = cart(), total = 0, n = 0;
+    c.forEach(function (l) { total += l.amount; n += l.qty; });
+    document.getElementById('total').textContent = money(total);
+    document.getElementById('count').textContent = n ? n + ' item' + (n > 1 ? 's' : '') + ' in your order' : 'Nothing added yet';
+    document.getElementById('go').disabled = !n;
+  }
+
+  function useGps() {
+    var hint = document.getElementById('lochint');
+    if (!navigator.geolocation) { hint.textContent = 'Your phone does not allow location here. Paste a Maps link instead.'; return; }
+    hint.textContent = 'Finding your location…';
+    navigator.geolocation.getCurrentPosition(function (pos) {
+      var lat = pos.coords.latitude.toFixed(6), lng = pos.coords.longitude.toFixed(6);
+      document.getElementById('location').value = 'https://maps.google.com/?q=' + lat + ',' + lng;
+      hint.innerHTML = 'Location added. <a href="https://maps.google.com/?q=' + lat + ',' + lng + '" target="_blank" rel="noopener">Check it on the map</a>.';
+    }, function () {
+      hint.textContent = 'Could not get your location. Please allow location access or paste a Maps link.';
+    }, { enableHighAccuracy: true, timeout: 10000 });
+  }
+
+  function showError(msg) {
+    var e = document.getElementById('err');
+    if (!e) { alert(msg); return; }
+    e.textContent = msg; e.style.display = 'block';
+    e.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    var go = document.getElementById('go'); if (go) { go.disabled = false; go.textContent = 'Place order'; }
+  }
+
+  function submit() {
+    var v = function (id) { return document.getElementById(id).value.trim(); };
+    document.getElementById('err').style.display = 'none';
+    if (!v('name'))    return showError('Please enter your name.');
+    if (v('phone').replace(/\D/g, '').length < 10) return showError('Please enter a valid WhatsApp number.');
+    if (mode === 'Delivery' && !v('address')) return showError('Please enter the delivery address.');
+    if (!v('date'))    return showError('Please pick a date.');
+    var go = document.getElementById('go'); go.disabled = true; go.textContent = 'Placing order…';
+    run('placeOrder', [{ name: v('name'), phone: v('phone'), mode: mode,
+                         address: mode === 'Delivery' ? v('address') : '', location: mode === 'Delivery' ? v('location') : '',
+                         date: v('date'), note: v('note'), items: cart() }], function (r) {
+      if (!r.ok) { showError(r.error); run('getShop', [], function (s) { shop = s; renderProducts(); }); return; }
+      window.scrollTo(0, 0);
+      var when = r.mode === 'Pickup'
+        ? 'pickup on ' + esc(prettyDate(v('date'))) + ' from ' + esc(shop.shopAddress || shop.shopName) + (shop.shopMap ? ' · ' + mapLink('map') : '')
+        : 'delivery on ' + esc(prettyDate(v('date')));
+      document.getElementById('app').innerHTML = '<div class="done"><div class="tick">✓</div><h1>Order received</h1>'
+        + '<div>Thank you, ' + esc(v('name')) + '. Your order number is</div><div class="id">' + esc(r.orderId) + '</div>'
+        + '<ul>' + r.items.map(function (t) { return '<li>' + esc(t) + '</li>'; }).join('') + '</ul>'
+        + '<div><b>Total ' + money(r.total) + '</b> · ' + when + '</div>'
+        + (shop.upi ? '<div class="hint" style="margin-top:10px">Pay on ' + (r.mode === 'Pickup' ? 'collection' : 'delivery') + ' or UPI: <b>' + esc(shop.upi) + '</b></div>' : '')
+        + (r.whatsappLink ? '<p style="margin-top:26px">Tap below to confirm on WhatsApp so we can reply to you.</p><a class="wabtn" href="' + esc(r.whatsappLink) + '">Confirm on WhatsApp</a>' : '')
+        + '</div>';
+    });
+  }
+
+  function prettyDate(iso) {
+    var p = iso.split('-'), m = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    return p.length === 3 ? p[2] + '-' + m[Number(p[1]) - 1] + '-' + p[0] : iso;
+  }
+</script>
+</body>
+</html>
